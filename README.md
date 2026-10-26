@@ -130,3 +130,55 @@ fetchOptions: { credentials: "include", withDUBrowserID: true }
 ```
 
 `z_c0` 和 `d_c0` 必须成对。
+
+---
+
+## 邀请相关（部分可用）
+
+从知乎安卓客户端的 `InviteeService` 里扒出来的端点：
+
+| 方法 | 路径 | 状态 |
+|---|---|---|
+| GET | `/api/v4/me/invitations/questions` | ✅ 能读——谁邀请了我回答 |
+| GET | `/api/v4/questions/{id}/invitees` | ✅ 能读——这个题已邀请了谁 |
+| GET | `/api/v4/questions/{id}/recommendation_invitees` | ✅ 能读——推荐可以邀请的人 |
+| GET | `/api/v4/questions/{id}/invitees/search` | ✅ 能读——搜人 |
+| **POST** | `/api/v4/questions/{id}/invitees` | ❌ **参数格式未解** |
+| DELETE | `/api/v4/questions/{id}/invitees/{member_id}` | 未测 |
+
+### 推荐接口返回的东西
+
+```json
+{
+  "one_button_invite": true,     // 一键邀请是否可用
+  "is_forbid_invite": false,     // 是否被禁止邀请
+  "left_invitation": 15,         // 还剩几个名额
+  "invite_text": "邀请更多知友，更好更快获得解答",
+  "data": [ { "member": {...}, "reasons": [...], "is_invited": false } ]
+}
+```
+
+### POST 邀请没解出来的部分
+
+反编译出来的方法签名是：
+
+```
+public abstract a(long question_id, String people_ids, ...)
+  @Path("question_id")
+  @Field("people_ids")     ← String，不是数组
+  @POST("/questions/{question_id}/invitees")
+```
+
+试过但全部返回 `400 MalformRequestException` 的格式：
+
+- `{"people_ids": "<hex_id>"}`
+- `{"people_ids": ["<hex_id>"]}`
+- `{"people_ids": "[\"<hex_id>\"]"}`
+- 表单 `people_ids=<hex_id>`
+- 表单 `people_ids[]=<hex_id>`
+- query `?people_ids=<hex_id>`
+- 空 body
+
+账号状态是允许邀请的（`one_button_invite: true`、`left_invitation: 15`），所以不是权限问题，是格式。
+
+**如果有人解出来了，欢迎提 PR。** 这条我卡住了。
