@@ -1,0 +1,5 @@
+auth/
+*.docx
+data_*.json
+node_modules/
+*.log
